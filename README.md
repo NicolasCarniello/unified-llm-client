@@ -65,9 +65,12 @@ unified-llm-client/
 │   ├── anthropic_client.py   # implementación Anthropic (AsyncAnthropic)
 │   ├── _errors.py            # traducción de excepciones de los SDKs a LLMError
 │   └── manager.py            # AsyncLLMManager (factory) + carga de configuración
+├── tests/                    # 93 tests con pytest (sin red ni API keys)
 ├── main.py                   # script de validación
 ├── .env.example              # plantilla de variables de entorno
+├── pyproject.toml            # metadatos y configuración de pytest
 ├── requirements.txt
+├── requirements-dev.txt      # + pytest, pytest-asyncio, pytest-cov
 └── README.md
 ```
 
@@ -147,6 +150,28 @@ La entropía mide el desorden de un sistema...
   4. Bonus · OpenAI y Anthropic en paralelo
   ⏱  En paralelo: 1.04s · secuencial habría tardado ~2.04s
 ```
+
+---
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest                                   # 93 tests, ~3 s
+pytest --cov=llm_client                  # con reporte de cobertura (~98%)
+```
+
+Los tests **no usan red ni API keys** y no gastan créditos. Se le pasa a cada SDK un `http_client` con un
+`MockTransport` que simula el servidor (ver `tests/fakes.py`). Así se ejercita el SDK real de punta a punta:
+parseo de respuestas, streaming SSE y excepciones, con respuestas controladas. Qué cubren:
+
+- **Validación** (`test_schemas.py`): rangos de temperatura, `max_tokens` y `top_p`, roles, inmutabilidad, backoff.
+- **Robustez** (`test_base.py`): reintenta solo errores transitorios, se rinde tras `max_retries`, el streaming no
+  reintenta después del primer token, y 5 llamadas concurrentes corren en paralelo (prueba de no bloqueo).
+- **Proveedores** (`test_openai_client.py`, `test_anthropic_client.py`): formato de cada API, `system` separado en
+  Anthropic, chunks vacíos, bloques de razonamiento, rechazos y cada código de error HTTP (401, 403, 404, 429, 500, 529, red, timeout).
+- **Manager** (`test_manager.py`): selección por `LLM_PROVIDER`, errores de configuración e intercambiabilidad
+  (el mismo código funciona con los dos proveedores).
 
 ---
 
