@@ -6,6 +6,7 @@ anidados "a mano" y los datos inválidos se rechazan en el borde, antes de
 gastar una llamada a la API.
 """
 
+import random
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -63,6 +64,27 @@ class LLMError(BaseModel):
     message: str
     retryable: bool = Field(description="True si tiene sentido reintentar (errores transitorios).")
     status_code: int | None = None
+    retry_after: float | None = Field(
+        default=None, description="Segundos sugeridos por el servidor (header Retry-After), si los informó."
+    )
+
+
+class RetryPolicy(BaseModel):
+    """Política de reintentos con backoff exponencial y jitter."""
+
+    max_retries: int = Field(default=3, ge=0, le=10)
+    base_delay: float = Field(default=1.0, gt=0, description="Espera base en segundos.")
+    max_delay: float = Field(default=30.0, gt=0, description="Tope de espera entre intentos.")
+
+    def delay_for(self, attempt: int, error: LLMError) -> float:
+        """Segundos a esperar antes del reintento número `attempt` (empieza en 0)."""
+        if error.retry_after is not None:
+            # Si el servidor nos dice cuánto esperar, le hacemos caso.
+            return min(error.retry_after, self.max_delay)
+        # "Full jitter": aleatorio entre 0 y base*2^attempt. Evita que muchos
+        # clientes reintenten todos al mismo tiempo y vuelvan a saturar la API.
+        ceiling = min(self.base_delay * 2**attempt, self.max_delay)
+        return random.uniform(0, ceiling)
 
 
 class Usage(BaseModel):
