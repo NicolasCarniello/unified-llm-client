@@ -1,0 +1,8 @@
+# Secretos: NUNCA subir el .env
+.env
+
+# Entorno virtual y caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
