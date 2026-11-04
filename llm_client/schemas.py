@@ -41,7 +41,9 @@ class ModelConfig(BaseModel):
 
     model: str = Field(min_length=1, description="Nombre del modelo, p. ej. 'gpt-4o-mini'.")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=512, gt=0, le=8192)
+    # 2048 por defecto: los modelos con razonamiento interno (p. ej. Claude Opus 5.5)
+    # gastan parte de max_tokens pensando; con un tope muy bajo la respuesta sale cortada.
+    max_tokens: int = Field(default=2048, gt=0, le=16384)
     top_p: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
@@ -53,6 +55,8 @@ class ErrorType(StrEnum):
     NETWORK = "network"
     TIMEOUT = "timeout"
     BAD_REQUEST = "bad_request"
+    QUOTA = "quota"  # sin saldo/cuota: no se arregla esperando
+    REFUSAL = "refusal"  # el modelo se negó a responder (respuesta 200, no excepción HTTP)
     API = "api"
     UNKNOWN = "unknown"
 
