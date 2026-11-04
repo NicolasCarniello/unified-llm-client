@@ -81,7 +81,7 @@ unified-llm-client/
 Requisitos: **Python 3.12** y una API key de OpenAI y/o Anthropic.
 
 ```bash
-git clone <URL-de-este-repo>
+git clone https://github.com/NicolasCarniello/unified-llm-client.git
 cd unified-llm-client
 
 # 1. Entorno virtual con Python 3.12
