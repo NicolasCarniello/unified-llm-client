@@ -65,7 +65,10 @@ unified-llm-client/
 │   ├── anthropic_client.py   # implementación Anthropic (AsyncAnthropic)
 │   ├── _errors.py            # traducción de excepciones de los SDKs a LLMError
 │   └── manager.py            # AsyncLLMManager (factory) + carga de configuración
-├── tests/                    # 93 tests con pytest (sin red ni API keys)
+├── lcel/                     # Módulo 2: la misma tarea refactorizada a una cadena LCEL
+│   ├── cadena.py             #   prompt | modelo | StrOutputParser, con ainvoke / astream / abatch
+│   └── README.md
+├── tests/                    # 107 tests con pytest (sin red ni API keys)
 ├── main.py                   # script de validación
 ├── .env.example              # plantilla de variables de entorno
 ├── pyproject.toml            # metadatos y configuración de pytest
@@ -153,11 +156,24 @@ La entropía mide el desorden de un sistema...
 
 ---
 
+## Módulo 2: refactorización a LCEL
+
+La carpeta [`lcel/`](lcel/) resuelve la misma tarea con **LangChain Expression Language**: una cadena
+declarativa `ChatPromptTemplate | ChatOpenAI/ChatAnthropic | StrOutputParser` ejecutada con `await chain.ainvoke(...)`.
+
+```bash
+python -m lcel.cadena
+```
+
+Detalle, criterios de aceptación y comparación con el Módulo 1 en [`lcel/README.md`](lcel/README.md).
+
+---
+
 ## Tests
 
 ```bash
 pip install -r requirements-dev.txt
-pytest                                   # 93 tests, ~3 s
+pytest                                   # 107 tests, ~3 s
 pytest --cov=llm_client                  # con reporte de cobertura (~98%)
 ```
 
